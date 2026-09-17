@@ -64,6 +64,28 @@ CREATE TABLE IF NOT EXISTS billings (
 );
 ALTER TABLE billings ADD CONSTRAINT uni_billings_bill_no UNIQUE (bill_no);
 
+-- 庭审排期：改期不更新原记录，旧场次置 cancelled 后新建 scheduled 场次；
+-- rescheduled_from_id 唯一约束保证一个旧场次至多有一条后继（PostgreSQL 唯一索引允许多个 NULL）。
+CREATE TABLE IF NOT EXISTS hearings (
+  id BIGSERIAL PRIMARY KEY,
+  hearing_no VARCHAR(50) NOT NULL,
+  case_id BIGINT NOT NULL,
+  lead_lawyer_id BIGINT NOT NULL,
+  hearing_time TIMESTAMPTZ NOT NULL,
+  court VARCHAR(200) NOT NULL,
+  courtroom VARCHAR(100) NOT NULL,
+  status VARCHAR(30) NOT NULL DEFAULT 'scheduled',
+  rescheduled_from_id BIGINT,
+  version INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  cancelled_at TIMESTAMPTZ
+);
+ALTER TABLE hearings ADD CONSTRAINT uni_hearings_hearing_no UNIQUE (hearing_no);
+ALTER TABLE hearings ADD CONSTRAINT uni_hearings_rescheduled_from_id UNIQUE (rescheduled_from_id);
+CREATE INDEX IF NOT EXISTS idx_hearings_case ON hearings (case_id);
+CREATE INDEX IF NOT EXISTS idx_hearings_lawyer_time ON hearings (lead_lawyer_id, hearing_time);
+CREATE INDEX IF NOT EXISTS idx_hearings_status ON hearings (status);
+
 CREATE TABLE IF NOT EXISTS audit_logs (
   id BIGSERIAL PRIMARY KEY,
   operator_id BIGINT NOT NULL DEFAULT 0,

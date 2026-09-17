@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { Card, Descriptions, Tabs, Button, Select, Space, message, Tag } from 'antd'
+import { Card, Descriptions, Tabs, Button, Select, Space, message, Tag, Empty } from 'antd'
 import { getCase, changeCaseStatus, assignLawyer } from '@/api/case'
+import { listHearings } from '@/api/hearing'
 import { getClient } from '@/api/client'
 import DocumentList from '@/components/common/DocumentList'
 import BillingCard from '@/components/common/BillingCard'
+import HearingCard from '@/components/common/HearingCard'
+import HearingFormModal from '@/components/common/HearingFormModal'
 import StatusBadge from '@/components/common/StatusBadge'
 import PermissionGuard from '@/components/common/PermissionGuard'
 import TimelineItem from '@/components/common/TimelineItem'
@@ -12,7 +15,8 @@ import { useDocumentStore } from '@/stores/documentStore'
 import { useBillingStore } from '@/stores/billingStore'
 import { useUserStore } from '@/stores/userStore'
 import { CaseStatusOptions, CaseTypeOptions } from '@/constants/case'
-import type { CaseItem, Client } from '@/types'
+import { CASE_BLOCKED_FOR_HEARING } from '@/constants/hearing'
+import type { CaseItem, Client, Hearing } from '@/types'
 
 export default function CaseDetail() {
   const { id } = useParams()
@@ -21,6 +25,9 @@ export default function CaseDetail() {
   const [client, setClient] = useState<Client | null>(null)
   const [status, setStatus] = useState('')
   const [lawyer, setLawyer] = useState<number>()
+  const [hearings, setHearings] = useState<Hearing[]>([])
+  const [hearingModalOpen, setHearingModalOpen] = useState(false)
+  const [hearingTarget, setHearingTarget] = useState<Hearing | null>(null)
   const docStore = useDocumentStore()
   const billingStore = useBillingStore()
   const userStore = useUserStore()
@@ -41,6 +48,12 @@ export default function CaseDetail() {
     }
     docStore.fetchByCase(caseId)
     billingStore.fetchByCase(caseId)
+    loadHearings()
+  }
+
+  async function loadHearings() {
+    const res: any = await listHearings({ case_id: caseId, page: 1, page_size: 100 })
+    setHearings(res.data.list)
   }
 
   async function onStatusChange() {
@@ -123,6 +136,35 @@ export default function CaseDetail() {
             children: billingStore.byCase.map((b) => <BillingCard key={b.id} item={b} />),
           },
           {
+            key: 'hearings',
+            label: '庭审排期',
+            children: (
+              <Space direction="vertical" style={{ width: '100%' }} size={12}>
+                <PermissionGuard roles={['admin', 'lawyer']}>
+                  {CASE_BLOCKED_FOR_HEARING.includes(item.status) ? (
+                    <Tag color="default">案件已{CaseStatusOptions.find((o) => o.value === item.status)?.label}，不能新增未来庭审</Tag>
+                  ) : (
+                    <Button type="primary" onClick={() => { setHearingTarget(null); setHearingModalOpen(true) }}>
+                      新增庭审排期
+                    </Button>
+                  )}
+                </PermissionGuard>
+                {hearings.length === 0 ? (
+                  <Empty description="暂无庭审场次" />
+                ) : (
+                  hearings.map((h) => (
+                    <HearingCard
+                      key={h.id}
+                      item={h}
+                      lawyerName={userStore.lawyers.find((l) => l.id === h.lead_lawyer_id)?.real_name}
+                      onReschedule={(x) => { setHearingTarget(x); setHearingModalOpen(true) }}
+                    />
+                  ))
+                )}
+              </Space>
+            ),
+          },
+          {
             key: 'timeline',
             label: '时间线',
             children: (
@@ -136,6 +178,14 @@ export default function CaseDetail() {
             ),
           },
         ]}
+      />
+      <HearingFormModal
+        open={hearingModalOpen}
+        target={hearingTarget}
+        caseOptions={[item]}
+        defaultCaseId={item.id}
+        onClose={() => setHearingModalOpen(false)}
+        onSuccess={loadHearings}
       />
     </Card>
   )

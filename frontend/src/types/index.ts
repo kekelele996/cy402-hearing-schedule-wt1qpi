@@ -58,6 +58,21 @@ export interface Billing {
   created_at: string
 }
 
+export interface Hearing {
+  id: number
+  hearing_no: string
+  case_id: number
+  lead_lawyer_id: number
+  hearing_time: string
+  court: string
+  courtroom: string
+  status: string
+  rescheduled_from_id: number | null
+  version: number
+  created_at: string
+  cancelled_at: string | null
+}
+
 export interface AuditLog {
   id: number
   operator_id: number

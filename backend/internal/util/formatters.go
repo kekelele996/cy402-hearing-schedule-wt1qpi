@@ -87,6 +87,18 @@ func BillingStatusText(s string) string {
 	}
 }
 
+// HearingStatusText 庭审场次状态文本。
+func HearingStatusText(s string) string {
+	switch s {
+	case constants.HearingStatusScheduled:
+		return "待开庭"
+	case constants.HearingStatusCancelled:
+		return "已作废（改期）"
+	default:
+		return s
+	}
+}
+
 // DocumentTypeText 文档类型文本。
 func DocumentTypeText(t string) string {
 	switch t {

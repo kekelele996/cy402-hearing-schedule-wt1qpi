@@ -23,6 +23,7 @@ type Router struct {
 	caseH    *handler.CaseHandler
 	document *handler.DocumentHandler
 	billing  *handler.BillingHandler
+	hearing  *handler.HearingHandler
 	upload   *handler.UploadHandler
 	auditLog *handler.AuditLogHandler
 }
@@ -31,12 +32,14 @@ type Router struct {
 func New(cfg *config.Config, db *gorm.DB, logger *slog.Logger,
 	user *handler.UserHandler, client *handler.ClientHandler, caseH *handler.CaseHandler,
 	document *handler.DocumentHandler, billing *handler.BillingHandler,
+	hearing *handler.HearingHandler,
 	upload *handler.UploadHandler, auditLog *handler.AuditLogHandler) *Router {
 	return &Router{
 		cfg: cfg, db: db, logger: logger,
 		limiter: middleware.NewRateLimiter(cfg.RateLimitPerMinute),
 		user:    user, client: client, caseH: caseH,
-		document: document, billing: billing, upload: upload, auditLog: auditLog,
+		document: document, billing: billing, hearing: hearing,
+		upload: upload, auditLog: auditLog,
 	}
 }
 
@@ -64,6 +67,7 @@ func (r *Router) Setup() *gin.Engine {
 	r.registerCaseRoutes(v1)
 	r.registerDocumentRoutes(v1)
 	r.registerBillingRoutes(v1)
+	r.registerHearingRoutes(v1)
 	r.registerAuditLogRoutes(v1)
 	r.registerUploadRoutes(v1)
 	return engine

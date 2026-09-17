@@ -6,6 +6,7 @@ import CaseDetail from '@/pages/CaseDetail'
 import Clients from '@/pages/Clients'
 import Billing from '@/pages/Billing'
 import Documents from '@/pages/Documents'
+import Hearings from '@/pages/Hearings'
 import Profile from '@/pages/Profile'
 import AuditLogs from '@/pages/AuditLogs'
 import { RequireAuth, RequireRole } from './guards'
@@ -23,6 +24,7 @@ const router = createBrowserRouter([
       { index: true, element: <Navigate to="/cases" replace /> },
       { path: 'cases', element: <Cases /> },
       { path: 'cases/:id', element: <CaseDetail /> },
+      { path: 'hearings', element: <Hearings /> },
       { path: 'clients', element: <Clients /> },
       { path: 'billing', element: <Billing /> },
       { path: 'documents', element: <Documents /> },
