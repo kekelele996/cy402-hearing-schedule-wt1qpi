@@ -23,4 +23,11 @@ const (
 	MsgBillingPaid           = "账单已标记支付"
 	MsgBillingInvoiced       = "账单已开票"
 	MsgBillingVoided         = "账单已作废"
+	MsgHearingScheduled      = "庭审已排期"
+	MsgHearingRescheduled    = "庭审已改期，旧场次已作废"
+	MsgHearingCanceled       = "庭审已取消"
+	MsgHearingConflict       = "该律师在两小时内已有其他庭审，无法排期"
+	MsgHearingCaseClosed     = "案件已结案或归档，不能新增未来庭审"
+	MsgHearingInvalid        = "庭审场次状态不允许该操作"
+	MsgHearingConcurrent     = "庭审已被其他操作修改，请刷新后重试"
 )

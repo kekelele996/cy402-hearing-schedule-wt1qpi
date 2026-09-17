@@ -3,6 +3,7 @@ import Layout from '@/pages/Layout'
 import Login from '@/pages/Login'
 import Cases from '@/pages/Cases'
 import CaseDetail from '@/pages/CaseDetail'
+import Hearings from '@/pages/Hearings'
 import Clients from '@/pages/Clients'
 import Billing from '@/pages/Billing'
 import Documents from '@/pages/Documents'
@@ -23,6 +24,7 @@ const router = createBrowserRouter([
       { index: true, element: <Navigate to="/cases" replace /> },
       { path: 'cases', element: <Cases /> },
       { path: 'cases/:id', element: <CaseDetail /> },
+      { path: 'hearings', element: <Hearings /> },
       { path: 'clients', element: <Clients /> },
       { path: 'billing', element: <Billing /> },
       { path: 'documents', element: <Documents /> },

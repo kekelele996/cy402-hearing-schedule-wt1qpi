@@ -17,4 +17,8 @@ const (
 	CodeBillingStatusConflict = 40902
 	CodeUploadTooLarge        = 41300
 	CodeUnsupportedType       = 41500
+	CodeHearingConflict       = 40903
+	CodeHearingCaseClosed     = 40904
+	CodeHearingInvalid        = 40905
+	CodeHearingConcurrent     = 40906
 )

@@ -5,6 +5,7 @@ import { getCase, changeCaseStatus, assignLawyer } from '@/api/case'
 import { getClient } from '@/api/client'
 import DocumentList from '@/components/common/DocumentList'
 import BillingCard from '@/components/common/BillingCard'
+import CaseHearingPanel from '@/components/common/CaseHearingPanel'
 import StatusBadge from '@/components/common/StatusBadge'
 import PermissionGuard from '@/components/common/PermissionGuard'
 import TimelineItem from '@/components/common/TimelineItem'
@@ -121,6 +122,17 @@ export default function CaseDetail() {
             key: 'billings',
             label: '账单',
             children: billingStore.byCase.map((b) => <BillingCard key={b.id} item={b} />),
+          },
+          {
+            key: 'hearings',
+            label: '庭审',
+            children: (
+              <CaseHearingPanel
+                caseId={caseId}
+                leadLawyerId={item.lead_lawyer_id}
+                caseClosed={item.status === 'closed' || item.status === 'archived'}
+              />
+            ),
           },
           {
             key: 'timeline',

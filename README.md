@@ -125,6 +125,11 @@ cy-402/
 - 后端：`backend/internal/constants/billing.go`、`backend/internal/model/billing.go`、`backend/internal/service/billing_service.go`、`backend/internal/util/formatters.go`、`backend/internal/constants/log_templates.go`、`backend/internal/constants/error_codes.go`、`database/init.sql`
 - 前端：`frontend/src/constants/billing.ts`、`frontend/src/components/common/StatusBadge.tsx`、`frontend/src/components/common/AmountSummary.tsx`、`frontend/src/components/common/BillingCard.tsx`、`frontend/src/pages/Billing.tsx`
 
+### HearingStatus（scheduled/rescheduled/canceled）
+- 后端：`backend/internal/constants/hearing.go`、`backend/internal/model/hearing.go`、`backend/internal/repository/hearing_repository.go`、`backend/internal/service/hearing_service.go`、`backend/internal/handler/hearing_handler.go`、`backend/internal/dto/dto_hearing.go`、`backend/internal/constants/error_codes.go`、`database/init.sql`
+- 前端：`frontend/src/constants/hearing.ts`、`frontend/src/api/hearing.ts`、`frontend/src/stores/hearingStore.ts`、`frontend/src/pages/Hearings.tsx`、`frontend/src/components/common/CaseHearingPanel.tsx`
+- 排期约束：仅 `scheduled` 为有效/待办场次；同一主办律师两场有效庭审间隔不足两小时整次拒绝（原排期不变）；改期只作废旧场次（`rescheduled`）并生成新场次，靠 `root_id` 部分唯一索引 `uniq_hearing_active` 把同时到达的两个改期收敛为一条有效记录；已结案（closed）/归档（archived）案件不能新增未来庭审。
+
 ## API 接口清单
 
 | 方法 | 路径 | 说明 |
@@ -159,6 +164,13 @@ cy-402/
 | POST | /api/v1/billings/:id/paid | 标记支付 |
 | POST | /api/v1/billings/:id/invoiced | 标记开票 |
 | POST | /api/v1/billings/:id/void | 作废账单 |
+| GET | /api/v1/hearings | 庭审分页（默认仅有效场次；`include_void=true` 含作废） |
+| GET | /api/v1/hearings/upcoming | 未来有效庭审（律师待办） |
+| GET | /api/v1/hearings/by-case/:id/history | 某案件全部场次（含改期链） |
+| GET | /api/v1/hearings/:id | 场次详情 |
+| POST | /api/v1/hearings | 新建庭审排期 |
+| POST | /api/v1/hearings/:id/reschedule | 改期（作废旧场次并生成新场次） |
+| POST | /api/v1/hearings/:id/cancel | 取消场次（作废，不物理删除） |
 | GET | /api/v1/audit-logs | 审计日志（仅管理员） |
 | POST | /api/v1/upload/file | 文件上传 |
 
@@ -166,6 +178,7 @@ cy-402/
 
 - 客户管理：新建/编辑/检索客户，查看历史案件。
 - 案件管理：创建案件、状态流转（立案→调查→庭审→结案→归档）、律师分配、筛选查询。
+- 庭审排期：排期/改期/取消，两场庭审间隔不足两小时整次拒绝，改期作废留痕且收敛为唯一有效场次，已结案/归档案件禁止新增未来庭审。
 - 文档归档：按案件上传/查看/删除文档（起诉状/答辩状/证据/判决书/合同等）。
 - 费用结算：创建账单、标记支付、开票、作废，本月应收/已收/待收汇总。
 - 审计日志：写操作自动记录（管理员查看）。

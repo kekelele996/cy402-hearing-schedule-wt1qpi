@@ -64,6 +64,32 @@ CREATE TABLE IF NOT EXISTS billings (
 );
 ALTER TABLE billings ADD CONSTRAINT uni_billings_bill_no UNIQUE (bill_no);
 
+-- 庭审场次：改期只作废旧场次（rescheduled）并生成新场次，不做原地更新或物理删除。
+-- root_id 标识同一条改期链；部分唯一索引保证每条链最多一条 scheduled 有效记录，
+-- 同时到达的两个改期也会在数据库层收敛为一条有效记录。
+CREATE TABLE IF NOT EXISTS hearings (
+  id BIGSERIAL PRIMARY KEY,
+  hearing_no VARCHAR(50) NOT NULL,
+  case_id BIGINT NOT NULL,
+  lead_lawyer_id BIGINT NOT NULL,
+  hearing_time TIMESTAMPTZ NOT NULL,
+  court VARCHAR(200) NOT NULL,
+  courtroom VARCHAR(100) NOT NULL,
+  status VARCHAR(30) NOT NULL DEFAULT 'scheduled',
+  root_id BIGINT NOT NULL,
+  seq INTEGER NOT NULL DEFAULT 1,
+  rescheduled_from BIGINT NOT NULL DEFAULT 0,
+  cancel_reason VARCHAR(255) NOT NULL DEFAULT '',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+ALTER TABLE hearings ADD CONSTRAINT uni_hearings_hearing_no UNIQUE (hearing_no);
+CREATE INDEX IF NOT EXISTS idx_hearings_case ON hearings (case_id);
+CREATE INDEX IF NOT EXISTS idx_hearings_lawyer ON hearings (lead_lawyer_id);
+CREATE INDEX IF NOT EXISTS idx_hearings_time ON hearings (hearing_time);
+CREATE INDEX IF NOT EXISTS idx_hearings_status ON hearings (status);
+CREATE UNIQUE INDEX IF NOT EXISTS uniq_hearing_active ON hearings (root_id) WHERE status = 'scheduled';
+
 CREATE TABLE IF NOT EXISTS audit_logs (
   id BIGSERIAL PRIMARY KEY,
   operator_id BIGINT NOT NULL DEFAULT 0,
@@ -101,6 +127,12 @@ INSERT INTO billings (id, bill_no, billing_type, amount, status, case_id, client
 (2, 'BILL2026080002', 'court_fee', 5000.00, 'pending', 1, 1, '', NOW()),
 (3, 'BILL2026080003', 'attorney_fee', 15000.00, 'invoiced', 2, 2, '已开票 15000 元', NOW());
 
+-- 庭审种子：1 为案件 1 的未来有效场次；2/3 演示一条改期链（旧场次已作废，新场次有效）。
+INSERT INTO hearings (id, hearing_no, case_id, lead_lawyer_id, hearing_time, court, courtroom, status, root_id, seq, rescheduled_from, cancel_reason, created_at, updated_at) VALUES
+(1, 'HEAR202600001', 1, 2, NOW() + INTERVAL '3 days', '深圳市南山区人民法院', '第 8 法庭', 'scheduled', 1, 1, 0, '', NOW(), NOW()),
+(2, 'HEAR202600002', 2, 2, NOW() - INTERVAL '2 days', '深圳市福田区人民法院', '第 3 法庭', 'rescheduled', 2, 1, 0, '', NOW() - INTERVAL '5 days', NOW() - INTERVAL '3 days'),
+(3, 'HEAR202600003', 2, 2, NOW() + INTERVAL '6 days', '深圳市福田区人民法院', '第 5 法庭', 'scheduled', 2, 2, 2, '', NOW() - INTERVAL '3 days', NOW() - INTERVAL '3 days');
+
 INSERT INTO audit_logs (id, operator_id, operator_name, action, entity_type, entity_id, detail, ip, created_at) VALUES
 (1, 1, 'admin', 'seed', 'system', '', 'init', '127.0.0.1', NOW());
 
@@ -110,4 +142,5 @@ SELECT setval(pg_get_serial_sequence('clients', 'id'), (SELECT COALESCE(MAX(id),
 SELECT setval(pg_get_serial_sequence('cases', 'id'), (SELECT COALESCE(MAX(id), 1) FROM cases));
 SELECT setval(pg_get_serial_sequence('documents', 'id'), (SELECT COALESCE(MAX(id), 1) FROM documents));
 SELECT setval(pg_get_serial_sequence('billings', 'id'), (SELECT COALESCE(MAX(id), 1) FROM billings));
+SELECT setval(pg_get_serial_sequence('hearings', 'id'), (SELECT COALESCE(MAX(id), 1) FROM hearings));
 SELECT setval(pg_get_serial_sequence('audit_logs', 'id'), (SELECT COALESCE(MAX(id), 1) FROM audit_logs));

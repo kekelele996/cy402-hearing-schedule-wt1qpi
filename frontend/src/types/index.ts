@@ -70,6 +70,24 @@ export interface AuditLog {
   created_at: string
 }
 
+export interface Hearing {
+  id: number
+  hearing_no: string
+  case_id: number
+  lead_lawyer_id: number
+  hearing_time: string
+  court: string
+  courtroom: string
+  // scheduled 为唯一有效（待办）状态；rescheduled/canceled 为作废场次。
+  status: 'scheduled' | 'rescheduled' | 'canceled'
+  root_id: number
+  seq: number
+  rescheduled_from: number
+  cancel_reason: string
+  created_at: string
+  updated_at: string
+}
+
 export interface PageResult<T> {
   list: T[]
   total: number
